@@ -58,7 +58,21 @@ function profile(){return header('Luke’s Profile')+'<div class="card"><h2>Luke
 function nav(){var items=[['home','⌂','Home'],['learn','▤','Learn'],['explore','◇','Explore'],['exams','▣','Exams'],['profile','◯','Profile']];el('nav').innerHTML=items.map(function(x){return '<button class="'+(state.page===x[0]?'active':'')+'" data-act="'+x[0]+'"><span style="font-size:22px">'+x[1]+'</span>'+x[2]+'</button>';}).join('');}
 function render(){try{var pages={home:home,learn:learn,lesson:lesson,explore:explore,story:story,exams:exams,test:test,profile:profile};el('app').innerHTML=pages[state.page]();nav();}catch(e){el('app').innerHTML='<div class="card"><h2>App error</h2><p>'+esc(e.message||e)+'</p><button class="btn" data-act="home">Return home</button></div>';}}
 function go(p){state.page=p;state.choice=-1;state.checked=false;render();window.scrollTo(0,0);}
-function say(t){if(!window.speechSynthesis)return;window.speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t);u.lang='it-IT';u.rate=.85;window.speechSynthesis.speak(u);}
+function say(t){
+ if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return;
+ var synth=window.speechSynthesis;
+ synth.cancel();
+ var u=new SpeechSynthesisUtterance(String(t).trim());
+ u.lang='it-IT';u.rate=0.94;u.pitch=1;
+ var voices=synth.getVoices()||[];
+ var italian=voices.filter(function(v){return /^it(?:-|$)/i.test(v.lang||'');});
+ italian.sort(function(a,b){
+  function rank(v){var n=(v.name||'').toLowerCase();return (v.lang.toLowerCase()==='it-it'?10:0)+(v.localService?5:0)+(/alice|elsa|federica|luca|cosimo/.test(n)?3:0);}
+  return rank(b)-rank(a);
+ });
+ if(italian.length)u.voice=italian[0];
+ synth.speak(u);
+}
 function backup(){var a=document.createElement('a'),blob=new Blob([JSON.stringify({version:3,saved:saved},null,2)],{type:'application/json'});a.href=URL.createObjectURL(blob);a.download='italiano-luke-backup.json';document.body.appendChild(a);a.click();document.body.removeChild(a);}
 document.addEventListener('click',function(e){var t=e.target;while(t&&t!==document&&!t.getAttribute('data-act')&&!t.getAttribute('data-level')&&!t.getAttribute('data-lesson')&&!t.getAttribute('data-choice')&&!t.getAttribute('data-story')&&!t.getAttribute('data-form')&&!t.getAttribute('data-speak'))t=t.parentNode;if(!t||t===document)return;
 if(t.hasAttribute('data-level')){state.level=t.getAttribute('data-level');render();return;}
