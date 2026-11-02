@@ -58,20 +58,39 @@ function profile(){return header('Luke’s Profile')+'<div class="card"><h2>Luke
 function nav(){var items=[['home','⌂','Home'],['learn','▤','Learn'],['explore','◇','Explore'],['exams','▣','Exams'],['profile','◯','Profile']];el('nav').innerHTML=items.map(function(x){return '<button class="'+(state.page===x[0]?'active':'')+'" data-act="'+x[0]+'"><span style="font-size:22px">'+x[1]+'</span>'+x[2]+'</button>';}).join('');}
 function render(){try{var pages={home:home,learn:learn,lesson:lesson,explore:explore,story:story,exams:exams,test:test,profile:profile};el('app').innerHTML=pages[state.page]();nav();}catch(e){el('app').innerHTML='<div class="card"><h2>App error</h2><p>'+esc(e.message||e)+'</p><button class="btn" data-act="home">Return home</button></div>';}}
 function go(p){state.page=p;state.choice=-1;state.checked=false;render();window.scrollTo(0,0);}
+var italianVoice=null;
+function chooseItalianVoice(){
+ var voices=(window.speechSynthesis&&speechSynthesis.getVoices())||[];
+ var it=voices.filter(function(v){return /^it(?:-|$)/i.test(v.lang||'');});
+ if(!it.length)return null;
+ var preferred='';try{preferred=localStorage.getItem('italiano_luke_voice')||'';}catch(e){}
+ if(preferred){var match=it.filter(function(v){return v.voiceURI===preferred;});if(match.length)return match[0];}
+ it.sort(function(a,b){
+  function score(v){var n=(v.name||'').toLowerCase();return (/premium|enhanced|neural|natural/.test(n)?50:0)+(v.lang.toLowerCase()==='it-it'?20:0)+(v.localService?10:0)+(/alice|elsa|federica|luca|cosimo/.test(n)?5:0);}
+  return score(b)-score(a);
+ });return it[0];
+}
 function say(t){
  if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return;
  var synth=window.speechSynthesis;
- synth.cancel();
- var u=new SpeechSynthesisUtterance(String(t).trim());
- u.lang='it-IT';u.rate=0.94;u.pitch=1;
- var voices=synth.getVoices()||[];
- var italian=voices.filter(function(v){return /^it(?:-|$)/i.test(v.lang||'');});
- italian.sort(function(a,b){
-  function rank(v){var n=(v.name||'').toLowerCase();return (v.lang.toLowerCase()==='it-it'?10:0)+(v.localService?5:0)+(/alice|elsa|federica|luca|cosimo/.test(n)?3:0);}
-  return rank(b)-rank(a);
- });
- if(italian.length)u.voice=italian[0];
- synth.speak(u);
+ function play(){
+  synth.cancel();
+  var u=new SpeechSynthesisUtterance(String(t).trim());
+  u.lang='it-IT';u.rate=1;u.pitch=1;
+  var v=chooseItalianVoice();if(v)u.voice=v;
+  synth.speak(u);
+ }
+ if(!synth.getVoices().length){
+  var fired=false;
+  var once=function(){if(fired)return;fired=true;synth.removeEventListener('voiceschanged',once);play();};
+  synth.addEventListener('voiceschanged',once);
+  setTimeout(once,800);
+ }else play();
+}
+function voiceSettings(){
+ var voices=(window.speechSynthesis&&speechSynthesis.getVoices())||[];
+ var it=voices.filter(function(v){return /^it(?:-|$)/i.test(v.lang||'');});
+ return '<div class="card"><h3>Italian pronunciation</h3><p class="notice">Choose an Italian voice if the automatic one sounds unnatural. The choice is saved.</p><select id="voiceChoice" style="width:100%;padding:13px;border:1px solid #d6e1d9;border-radius:12px;background:white">'+(it.length?it.map(function(v){return '<option value="'+esc(v.voiceURI)+'" '+(chooseItalianVoice()&&v.voiceURI===chooseItalianVoice().voiceURI?'selected':'')+'>'+esc(v.name)+' — '+esc(v.lang)+'</option>';}).join(''):'<option>No Italian voice available on this device</option>')+'</select><button class="btn outline full" data-act="testvoice" style="margin-top:10px">Test: Ciao, come stai?</button></div>';
 }
 function backup(){var a=document.createElement('a'),blob=new Blob([JSON.stringify({version:3,saved:saved},null,2)],{type:'application/json'});a.href=URL.createObjectURL(blob);a.download='italiano-luke-backup.json';document.body.appendChild(a);a.click();document.body.removeChild(a);}
 document.addEventListener('click',function(e){var t=e.target;while(t&&t!==document&&!t.getAttribute('data-act')&&!t.getAttribute('data-level')&&!t.getAttribute('data-lesson')&&!t.getAttribute('data-choice')&&!t.getAttribute('data-story')&&!t.getAttribute('data-form')&&!t.getAttribute('data-speak'))t=t.parentNode;if(!t||t===document)return;
@@ -88,10 +107,11 @@ if(a==='nextstory'){if(state.step+1<stories[state.story].lines.length){state.ste
 if(a==='nextquestion'){if(state.choice<0)return;state.answers.push(questions()[state.q].options[state.choice]);state.q++;go('test');return;}
 if(a==='savenotes'){saved.notes.text=el('notes').value;persist();alert('Notes saved.');return;}
 if(a==='backup'){backup();return;}
+if(a==='testvoice'){say('Ciao, come stai?');return;}
 if(a==='import'){el('importfile').click();return;}
 if(a==='home'||a==='learn'||a==='explore'||a==='exams'||a==='profile'){go(a);return;}
 });
-document.addEventListener('change',function(e){if(e.target.id!=='importfile'||!e.target.files[0])return;var r=new FileReader();r.onload=function(){try{var obj=JSON.parse(r.result);if(!obj.saved||!obj.saved.completed||!obj.saved.exams)throw Error('Invalid backup');if(confirm('Replace current progress?')){saved=obj.saved;persist();go('profile');}}catch(err){alert('Invalid backup file');}};r.readAsText(e.target.files[0]);});
+document.addEventListener('change',function(e){if(e.target.id==='voiceChoice'){try{localStorage.setItem('italiano_luke_voice',e.target.value);}catch(x){}say('Ciao, come stai?');return;}if(e.target.id!=='importfile'||!e.target.files[0])return;var r=new FileReader();r.onload=function(){try{var obj=JSON.parse(r.result);if(!obj.saved||!obj.saved.completed||!obj.saved.exams)throw Error('Invalid backup');if(confirm('Replace current progress?')){saved=obj.saved;persist();go('profile');}}catch(err){alert('Invalid backup file');}};r.readAsText(e.target.files[0]);});
 render();
 })();
 </script></body></html>
