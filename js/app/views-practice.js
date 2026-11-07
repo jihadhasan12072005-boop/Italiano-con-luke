@@ -235,11 +235,13 @@ V.daily = function () {
 App.dailyItems = function (lv, seed) {
   var rnd = U.rng(seed), items = [];
   if (App.Gen && App.Gen.forLevel) items = items.concat(App.Gen.forLevel(lv, 4, seed));
-  var ls = App.lessons(lv), done = ls.filter(function (l) { return S().lessons[l.id] && S().lessons[l.id].done; }), pool = done.length >= 3 ? done : ls.slice(0, Math.max(4, done.length + 3));
+  var ls = App.lessons(lv), isDone = function (l) { return S().lessons[l.id] && S().lessons[l.id].done; }, done = ls.filter(isDone), pool = done.concat(ls.filter(function (l) { return !isDone(l); }).slice(0, Math.max(0, 6 - done.length)));
   var picks = U.shuffle(pool, rnd).slice(0, 4);
   picks.forEach(function (L) { var q = L.q.filter(function (x) { return x.t === 'mc' || x.t === 'fill'; }); var qi = Math.floor(rnd() * q.length); items.push(App.Quiz.fromLessonQ(L, q[qi], L.q.indexOf(q[qi]))); });
   var L2 = U.pick(pool, rnd), ord = L2.q.filter(function (x) { return x.t === 'order'; })[0]; if (ord) items.push(App.Quiz.fromLessonQ(L2, ord, L2.q.indexOf(ord)));
   items = items.concat(App.listenSession(lv, 1, seed + 3).slice(0, 1));
+  items = items.filter(Boolean);
+  if (items.length < 10 && App.Gen) items = items.concat(App.Gen.forLevel(lv, 10 - items.length, seed + 11));
   return U.shuffle(items, rnd).slice(0, 10);
 };
 App.Finishers.daily = function (s) {

@@ -113,7 +113,7 @@ Q.view = function () {
     }
     if (it.why) h += '<p>' + U.md(it.why) + '</p>';
     if (!r.ok) h += '<p class="small muted">Saved to My Mistakes for smart review.</p>';
-    if (/[a-zàèéìòù]/i.test(it.answer) && it.type !== 'listen' && !(it.audio && it.type === 'mc')) h += '<div class="row" style="margin-top:8px"><button class="sound" data-say="' + U.attr(it.type === 'mc' && it.prompt.indexOf('___') > -1 ? it.prompt.replace(/_{2,}/, it.answer).replace(/\s*\(.*?\)\s*/g, ' ') : it.answer) + '">' + ic('play') + ' Hear it</button></div>';
+    var st = Q.sayText(it); if (st) h += '<div class="row" style="margin-top:8px"><button class="sound" data-say="' + U.attr(st) + '">' + ic('play') + ' Hear it</button></div>';
     h += '</div>';
   }
   h += '</div>';
@@ -130,6 +130,25 @@ Q.view = function () {
   if (it.type === 'speak') h += '<p class="small muted" style="text-align:center;margin:6px 0 0">Speaking practice is never marked wrong. Continue whenever you are ready.</p>';
   h += '</div>';
   return h;
+};
+
+/* Italian text to read aloud after an answer (never English) */
+var EN = /\b(the|you|your|is|are|was|were|of|and|with|it's|i'm|don't|they|their|what|how|which|for|by|at|from|this|that|only|not|too)\b/i;
+Q.sayText = function (it) {
+  if (it.type === 'listen' || it.audio || it.skill === 'reading' || it.type === 'speak') return '';
+  var ans = String(it.answer || ''), p = String(it.prompt || '').replace(/\*\*/g, '');
+  if (!/[a-zàèéìòù]/i.test(ans) || EN.test(ans)) return '';
+  if (/^(What does|Listen|What is|What are|Who |Where |When |Why |According)/i.test(p)) return '';
+  var itPrompt = /^(Choose the Italian|How do you say|How do you write|Which expression means|Build the)/i.test(p);
+  var marker = /[àèéìòù']|\b(il|lo|la|i|gli|le|un|una|di|da|in|con|su|per|che|non|è|sono|ho|ha|mi|ti|si|ci|del|della|al|alla|e|ne)\b/i.test(ans);
+  if (!itPrompt && !marker && ans.trim().split(/\s+/).length === 1 && (it.skill === 'practical' || it.skill === 'vocabulary')) return '';
+  if (it.type !== 'order' && p.indexOf('___') > -1) {
+    var before = p.split('___')[0];
+    if (!/:\s/.test(before) && !EN.test(p.replace(/\(.*?\)/g, ''))) {
+      return p.replace(/_{2,}\s?/, ans + (/'$/.test(ans) ? '' : ' ')).replace(/\s*\([^)]*\)/g, '').replace(/\s+([.,!?])/g, '$1').replace(/\s+/g, ' ').trim();
+    }
+  }
+  return ans;
 };
 
 /* ----- actions ----- */

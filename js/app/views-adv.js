@@ -20,18 +20,19 @@ V.adventures = function () {
   var lastLv = '';
   o.forEach(function (i, k) {
     var a = list[i], st = S().adv[i] || {}, un = AD.unlocked(i);
-    if (a.level !== lastLv) { lastLv = a.level; h += '<h3 style="margin:22px 0 6px">' + a.level + ' · ' + App.LEVEL_NAMES[a.level] + '</h3>'; }
-    var status = st.finished ? stars(st.best) : st.node ? '<span class="pill y">In progress</span>' : un ? '<span class="pill">New</span>' : '<span class="pill n">' + ic('lock') + ' Locked</span>';
-    h += '<button class="tile" data-go="#/adventure/' + i + '" style="margin:12px 0;' + (un ? '' : 'opacity:.78') + '"><div style="position:relative">' + App.photo(a.img) + '<span class="pill" style="position:absolute;left:12px;top:12px;background:rgba(255,255,255,.92);color:#14533f">' + U.esc(a.city) + '</span></div><div class="tb"><div class="row between"><span class="eyebrow">' + a.level + ' · ' + a.nodes.length + ' scenes</span>' + status + '</div><h3>' + U.esc(a.title) + '</h3><span class="meta">' + U.esc(a.intro) + '</span></div></button>';
+    if (a.level !== lastLv) { h += (lastLv ? '</div>' : '') + '<h3 style="margin:22px 0 10px">' + a.level + ' · ' + App.LEVEL_NAMES[a.level] + '</h3><div class="grid g2">'; lastLv = a.level; }
+    var status = st.node != null ? '<span class="pill y">In progress</span>' : st.finished ? stars(st.best) : un ? '<span class="pill">New</span>' : '<span class="pill n">' + ic('lock') + ' Locked</span>';
+    h += '<button class="tile" data-go="#/adventure/' + i + '" style="' + (un ? '' : 'opacity:.78') + '"><div style="position:relative">' + App.photo(a.img) + '<span class="pill" style="position:absolute;left:12px;top:12px;background:rgba(255,255,255,.92);color:#14533f">' + U.esc(a.city) + '</span></div><div class="tb"><div class="row between"><span class="eyebrow">' + a.level + ' · ' + a.nodes.length + ' scenes</span>' + status + '</div><h3>' + U.esc(a.title) + '</h3><span class="meta">' + U.esc(a.intro) + '</span></div></button>';
   });
-  return h;
+  return h + (lastLv ? '</div>' : '');
 };
 V.adventure = function (id) {
   id = +id; var a = advs()[id]; if (!a) return V.adventures();
   var c = AD.cur;
   if (!c || c.id !== id) {
     var st = S().adv[id] || {};
-    c = AD.cur = { id: id, node: st.finished || !st.node ? null : st.node, hearts: st.node && !st.finished ? (st.hearts || 3) : 3, pts: st.node && !st.finished ? (st.pts || 0) : 0, errs: st.node && !st.finished ? (st.errs || 0) : 0, pick: null, done: false, typed: '' };
+    var live = st.node != null && st.node !== false;
+    c = AD.cur = { id: id, node: live ? st.node : null, hearts: live ? (st.hearts || 3) : 3, pts: live ? (st.pts || 0) : 0, errs: live ? (st.errs || 0) : 0, pick: null, done: false, typed: '' };
   }
   var h = V.top(a.city + ' · ' + a.title, '#/adventures');
   if (c.node == null) {

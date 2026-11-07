@@ -110,8 +110,8 @@ b,strong{font-weight:700}
 .ph img.ld{opacity:1}
 .ph-rome{background-image:url(../img/rome.svg)}
 .ph-venice{background-image:url(../img/venice.svg)}
-.ph-florence,.ph-tuscany{background-image:url(../img/florence.svg)}
-.ph-milan{background-image:url(../img/milan.svg)}
+.ph-florence,.ph-tuscany,.ph-bologna,.ph-siena{background-image:url(../img/florence.svg)}
+.ph-milan,.ph-turin{background-image:url(../img/milan.svg)}
 .ph-amalfi,.ph-naples,.ph-cinque,.ph-sicily{background-image:url(../img/coast.svg)}
 .ph-generic{background-image:url(../img/coast.svg)}
 

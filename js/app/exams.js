@@ -4,7 +4,7 @@
 var App = window.App, U = App.U, ic = App.icon, V = App.V, S = function () { return App.S; };
 var E = App.Exams = { N: 50 };
 /* blueprint per paper */
-var BP = { grammar: 8, vocabulary: 4, reading: 3, practical: 3, construction: 2 };
+var BP = { grammar: 8, vocabulary: 5, reading: 3, practical: 2, construction: 2 };
 
 /* ---------- pools ---------- */
 var cache = {};

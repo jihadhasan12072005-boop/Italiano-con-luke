@@ -157,7 +157,10 @@ App.PHOTOS = {
   cinque: { u: 'photo-1516483638261-f4dbaf036963', alt: 'Manarola, Cinque Terre' },
   amalfi: { u: 'photo-1533105079780-92b9be482077', alt: 'The Italian coast' },
   naples: { u: 'photo-1533105079780-92b9be482077', alt: 'The coast of Campania' },
-  sicily: { u: '', alt: 'Sicily' }
+  sicily: { u: '', alt: 'Sicily' },
+  bologna: { u: '', alt: 'Bologna' },
+  turin: { u: '', alt: 'Turin' },
+  siena: { u: '', alt: 'Siena' }
 };
 App.photo = function (key, cls, w) {
   var p = App.PHOTOS[key] || App.PHOTOS.rome; w = w || 900;
